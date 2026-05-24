@@ -1,0 +1,32 @@
+---
+title: "Cilium Service Mesh & Gateway API"
+date: "2024-03"
+tags: ["Cilium", "Kubernetes", "eBPF", "Networking", "Security"]
+summary: "Implementing Cilium as the CNI and service mesh layer for a multi-tenant Kubernetes platform, with Gateway API for advanced traffic management and identity-based network policy."
+status: "shipped"
+---
+
+## Why Cilium
+
+Traditional Kubernetes network policy operates at the IP/port level — it's coarse-grained and breaks down when pods are ephemeral and IP addresses are reused. **Cilium** solves this by using **eBPF** to enforce policy at the kernel level, based on cryptographic workload identity rather than IP addresses.
+
+For a multi-tenant platform, this distinction matters enormously. Identity-based policies mean that security boundaries are defined by what a workload *is*, not where it happens to be running at a given moment.
+
+## Gateway API Implementation
+
+Implemented the **Cilium Gateway API** (certified, as evidenced by the Cilium Gateway API and Advanced Use Cases certifications) as the ingress and traffic management layer. The Gateway API is a more expressive successor to the Ingress resource — it supports traffic splitting, header-based routing, and cross-namespace references that make it genuinely useful for platform-level traffic management.
+
+The advanced use cases certification covered scenarios including cross-namespace routing, TLS termination, and traffic mirroring for canary deployments.
+
+## Network Policy Architecture
+
+Designed the layered network policy model for the platform:
+- **Cluster-wide policies**: managed by the platform team, not overrideable by tenants (egress to the internet, inter-namespace defaults)
+- **Tenant policies**: scoped to a team's namespace, giving them control over their own service-to-service communication
+- **Default-deny baseline**: all traffic denied unless explicitly permitted, enforced via a base policy that applies to every namespace at provision time
+
+The result is a platform where network security is correct by default, and teams opt in to communication paths they need rather than opting out of ones they don't.
+
+## eBPF Observability
+
+One underappreciated benefit of Cilium: the eBPF-based data plane gives you detailed network flow visibility with minimal overhead. Used Hubble (Cilium's observability layer) to provide teams with a live view of which services are talking to which, where connections are being dropped by policy, and what the latency distribution looks like at the network layer.

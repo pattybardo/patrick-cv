@@ -23,7 +23,7 @@ export function Nav() {
             Writing
           </Link>
           <a
-            href="mailto:dr.p.bardo@gmail.com"
+            href="mailto:patryk.bardo@gmail.com"
             className="font-mono text-[11px] uppercase tracking-widest border border-border px-3 py-1 text-text-muted hover:border-accent hover:text-accent transition-all duration-100"
           >
             Contact

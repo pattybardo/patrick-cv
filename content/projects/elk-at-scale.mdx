@@ -1,0 +1,29 @@
+---
+title: "ELK Logging Pipeline at 1B+ Docs/Day"
+date: "2022-06"
+tags: ["Elasticsearch", "Logstash", "Kibana", "Observability", "Data Engineering"]
+summary: "Maintained and significantly improved an ELK stack indexing over a billion documents a day, with per-tenant routing, automated lifecycle management, and a major version migration."
+status: "shipped"
+---
+
+## Scale
+
+Meltwater's ELK stack processes the log and event output of a large distributed product, used by thousands of customers daily. At peak, the pipeline indexes over **a billion documents per day** — a scale where the operational decisions that are optional at smaller volumes become mandatory.
+
+## Index Lifecycle Management
+
+The first major improvement was introducing **ILM (Index Lifecycle Management)** for automated rollover and retention. Before ILM, index management was a mix of manual operations and fragile cron jobs. With ILM, indices automatically roll over when they hit a size or age threshold, move to warm/cold tiers as they age, and are deleted when their retention window expires.
+
+This eliminated an entire category of manual toil and made retention behaviour consistent and auditable.
+
+## Shard Strategy
+
+At this scale, shard allocation strategy has a significant impact on query performance and cluster stability. Worked on tuning the number of shards per index, shard sizing targets, and rebalancing policies to avoid hot shards — situations where one shard receives disproportionate query or indexing load because a customer's data is concentrated in a narrow time range.
+
+## Per-Tenant Routing
+
+Built a per-tenant routing layer in the indexing pipeline so that high-volume customers (ingesting at a rate that would otherwise dominate shared infrastructure) are routed to dedicated index paths. This isolated noisy tenants without requiring separate physical infrastructure for each one.
+
+## The Version Migration
+
+Migrating the cluster from Elasticsearch 1.7 to 7.x was the foundational project that preceded all of this. Six major versions, incompatible data formats, a live production cluster that couldn't simply be taken offline. The approach — shadow indexing, historical backfill, a query compatibility shim, and a metered traffic cut-over — is documented in the Meltwater Software Engineer role.

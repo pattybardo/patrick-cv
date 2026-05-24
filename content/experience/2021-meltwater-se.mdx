@@ -1,0 +1,32 @@
+---
+title: "Software Engineer"
+company: "Meltwater"
+companyUrl: "https://meltwater.com"
+startDate: "2021-01"
+endDate: "2022-02"
+location: "Gothenburg, Sweden"
+tags: ["Elasticsearch", "Go", "Python", "Search", "Observability"]
+summary: "Information retrieval and storage on Meltwater's petabyte-scale Elasticsearch cluster, serving thousands of customers daily. Led the migration from Elasticsearch 1.7 to 7.x."
+---
+
+## The Problem Space
+
+Meltwater's core product is media intelligence — tracking what the world is saying across news, social, and broadcast media. At the heart of that is a search cluster that needs to store and retrieve enormous volumes of content quickly, for thousands of customers simultaneously, with query patterns that are unpredictable by nature.
+
+When I joined, the cluster was running Elasticsearch 1.7 — a version that was end-of-life and carrying years of accumulated technical debt. The mission was to migrate to 7.x without disrupting the customers who depended on it every day.
+
+## The Elasticsearch Migration
+
+Migrating across six major versions of Elasticsearch is not a simple upgrade. The query DSL had changed substantially, the mapping types had been removed, and the internal data formats were incompatible — meaning a rolling in-place upgrade wasn't an option. We needed a parallel-cluster approach with a cutover strategy.
+
+The migration ran in phases:
+1. **Shadow indexing** — new documents written to both the old and new cluster
+2. **Historical backfill** — replaying the existing corpus into the new cluster, verifying document counts and spot-checking query results
+3. **Query compatibility layer** — a thin translation layer that let the application tier continue using legacy query patterns while we incrementally updated them
+4. **Traffic cut-over** — shifting read traffic to the new cluster with the ability to roll back instantly
+
+The result was a cluster capable of handling complex nested aggregations and significantly higher concurrent query loads, with modern features like cross-cluster replication for resilience.
+
+## Observability
+
+A cluster at petabyte scale needs good observability to operate safely. Contributed to the monitoring and alerting infrastructure — tracking shard health, JVM garbage collection patterns, search latency percentiles, and indexing throughput — so the team could detect degradation before customers noticed it.

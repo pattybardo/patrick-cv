@@ -1,0 +1,33 @@
+---
+title: "Software Engineer"
+company: "Woodbine Entertainment"
+startDate: "2018-01"
+endDate: "2019-01"
+location: "Rexdale, Canada"
+tags: ["Python", "PySpark", "Hadoop", "CUDA", "Spring Boot", "Data Engineering"]
+summary: "Big Data engineering and probabilistic modelling for one of Canada's largest horse racing operators — converting raw wagering data into real-time actionable insights for thousands of customers."
+---
+
+## Context
+
+Woodbine Entertainment is one of Canada's largest horse racing companies, operating major tracks in Ontario. The engineering challenge was a data one: enormous volumes of historical and live wagering data, loosely structured, with the goal of understanding bettor behaviour well enough to surface better experiences in real time.
+
+## Big Data Pipeline
+
+The core of the work was wrangling wagering data at scale using the Hadoop ecosystem — **Hive** for SQL-style analysis over HDFS, and **PySpark** for more complex transformations that required the full expressiveness of a distributed compute framework.
+
+Converted loosely defined business questions — "which bettors are underperforming their stated strategy?" — into concrete analytical pipelines. The process involved significant data cleaning, joins across multiple source systems, and building reusable transformation libraries that the team could compose rather than rewriting from scratch.
+
+## Probabilistic Models
+
+Built and optimised probabilistic models designed to surface better wagering opportunities for customers. The modelling work involved understanding the statistical structure of pari-mutuel betting markets and identifying where the implied probabilities diverged from what historical data suggested.
+
+Used **CUDA programming** for Monte Carlo simulations to verify model results — running millions of simulated race outcomes to validate that the models behaved correctly under a range of conditions rather than just the historical average.
+
+## Real-Time Delivery
+
+The analytical work fed into a real-time optimisation layer: algorithms that could take model outputs and surface smart wagering suggestions to thousands of customers simultaneously. Built **Spring Boot microservices** to handle customer onboarding and serve recommendations, connecting the batch analytical work to the live product.
+
+## Data Integration
+
+Developed Python scripts to automate **Sqoop** data integration — moving data from relational databases into the Hadoop ecosystem reliably and repeatably, so the analytical pipelines always had fresh inputs.

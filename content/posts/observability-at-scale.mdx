@@ -1,0 +1,41 @@
+---
+title: "Observability at a Billion Documents a Day"
+date: "2023-06-05"
+tags: ["Observability", "Elasticsearch", "Platform Engineering", "Operations"]
+summary: "What operating an ELK stack at petabyte scale taught me about the difference between monitoring and observability — and why the distinction matters when things go wrong at 2am."
+readingTime: 6
+---
+
+There's a version of observability that is dashboards, and there's a version that is understanding. They're not the same thing, and at scale, the gap between them becomes a liability.
+
+I learned this operating Meltwater's logging pipeline — an ELK stack indexing over a billion documents a day, serving thousands of customers across a distributed product. The system was well-monitored in the conventional sense: we had Kibana dashboards, we had alerts on index lag and JVM heap usage, we had uptime checks. What we didn't have, for a long time, was genuine observability.
+
+## The Difference
+
+Monitoring tells you that something is wrong. Observability tells you *why*.
+
+A monitoring system says: your P99 indexing latency has crossed the alert threshold. An observable system lets you ask the follow-up questions without deploying new instrumentation: Which customers are affected? Which shards? Is this a hot shard problem or a JVM GC pause? Is it correlated with a specific Logstash pipeline stage?
+
+At a billion documents a day, the search space for "what's wrong" is enormous. You can't afford to diagnose by hypothesis — you need to be able to query your way to the answer.
+
+## What We Actually Built
+
+The first thing we fixed was **cardinality**. Our initial metrics were aggregated across the cluster — average indexing rate, total document count, overall heap usage. Useful for trend analysis, useless for incident response. We re-instrumented at per-index and per-node granularity, which immediately made it possible to answer "is this a one-bad-node problem or a cluster-wide problem?" — a question that changes the response entirely.
+
+The second was **cross-signal correlation**. Slow indexing latency has several possible causes: GC pressure, hot shards, Logstash pipeline bottlenecks, or a customer sending malformed documents that trigger expensive mapping operations. We built a correlation layer that surfaced relevant signals together when an alert fired — so the on-call engineer wasn't starting from scratch, but from a pre-structured investigation context.
+
+The third was **per-tenant visibility**. A noisy customer (high document volume, unusual query patterns) could degrade experience for other customers in ways that were invisible in aggregate metrics. Per-tenant dashboards made this class of problem detectable rather than something you discovered when a customer complained.
+
+## The Cilium Angle
+
+When I moved to Zenseact and started working with Cilium's eBPF-based observability (Hubble), I found the same principle at the network layer. Cilium gives you per-flow network visibility at kernel level — not just "traffic is flowing" but which service talked to which, which connection was dropped by policy, what the latency distribution looks like at the network layer rather than the application layer. Network observability with the same depth that application tracing gives you at the service layer.
+
+The pattern is consistent: instrumentation at the right granularity, queryable in real time, correlated across signals. The technology changes; the design principle doesn't.
+
+## What Good Observability Changes
+
+The biggest practical impact of genuinely observable systems isn't faster incident response (though that's real). It's that engineers stop being afraid of their systems.
+
+When you can ask your system questions and get answers, you run experiments rather than avoiding risk. You make changes with confidence rather than with fingers crossed. You do post-mortems on what actually happened rather than on what you think probably happened.
+
+At scale, that confidence is the difference between a platform that teams trust and one they route around.

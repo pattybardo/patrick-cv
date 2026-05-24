@@ -1,0 +1,36 @@
+---
+title: "DevOps / Engineering Enablement Engineer"
+company: "Meltwater"
+companyUrl: "https://meltwater.com"
+startDate: "2022-02"
+endDate: "2024-01"
+location: "Gothenburg, Sweden"
+tags: ["Kubernetes", "ArgoCD", "ELK Stack", "Backstage", "DevOps", "Terraform"]
+summary: "Engineering enablement across a 40+ team organisation — multi-tenant Kubernetes, a logging pipeline handling over a billion documents a day, and the tooling layer that tied it together."
+---
+
+## Context
+
+After two years embedded in Meltwater's search platform, I moved into the Engineering Enablement function — the team responsible for the infrastructure and tooling that every other engineering team depended on. The company was at a scale where platform inconsistency was becoming a real tax on velocity: 40+ teams, multiple clusters, and a patchwork of deployment conventions that had grown organically.
+
+## Multi-Tenant Kubernetes
+
+Operated and improved a fleet of multi-tenant Kubernetes clusters serving teams across the organisation. The challenge at this scale isn't the technology — Kubernetes does what it does — it's the **operational model**: how do you give teams enough autonomy to move fast while maintaining the security boundaries and resource guarantees that multi-tenancy requires?
+
+We built a namespace-per-team model with resource quotas, network policies enforced via Cilium, and a self-service provisioning workflow that let teams get a new environment without opening a ticket.
+
+## The Logging Pipeline
+
+Owned the maintenance and improvement of the ELK (Elasticsearch, Logstash, Kibana) stack, which was indexing **over a billion documents a day** across Meltwater's product surface. At that scale, the interesting problems aren't about whether Elasticsearch can handle the load — it's about managing index lifecycle, shard allocation strategy, and what happens when a customer query pattern changes unexpectedly and hits a hot shard.
+
+Key improvements included moving to ILM (Index Lifecycle Management) for automated rollover and retention, tuning JVM heap allocation across the data tier, and building a per-tenant routing layer so a noisy pipeline couldn't impact other customers.
+
+## ArgoCD at Scale
+
+Introduced and supported ArgoCD as the GitOps deployment tool for over 40 teams. The multi-tenant setup was the hard part: a single ArgoCD installation serving many teams, with RBAC configured so teams could manage their own applications without being able to interfere with each other's — or with platform-managed infrastructure.
+
+Adoption was gradual and collaborative. We ran internal workshops, created opinionated application templates, and embedded ArgoCD patterns into the self-service provisioning workflow so new teams started on GitOps from day one.
+
+## Backstage
+
+Contributed to Meltwater's Backstage implementation — the internal developer portal that unified documentation, service ownership, and onboarding across the organisation. The goal was to make it easy to answer "who owns this service, where is its documentation, and what does its dependency graph look like?" without hunting through three different systems.

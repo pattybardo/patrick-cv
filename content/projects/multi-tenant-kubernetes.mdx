@@ -1,0 +1,34 @@
+---
+title: "Multi-Tenant Kubernetes Platform"
+date: "2023-04"
+tags: ["Kubernetes", "Cilium", "ArgoCD", "Terraform", "Platform Engineering"]
+summary: "Self-service multi-tenant Kubernetes platform serving 40+ engineering teams, with namespace isolation, GitOps deployment, and zero-ticket environment provisioning."
+status: "shipped"
+---
+
+## The Problem
+
+At Meltwater's scale — 40+ engineering teams across multiple products — every team managing their own deployment conventions was becoming untenable. Inconsistent Kubernetes configurations, unclear ownership boundaries, and a steady stream of "how do I deploy this?" tickets were symptoms of a platform that had grown faster than its governance model.
+
+The goal was a platform that teams could use without needing to understand what was underneath it, but that operations could manage with confidence.
+
+## Architecture
+
+The platform is built on a namespace-per-team model. Each team gets a dedicated namespace with resource quotas (CPU, memory, storage) enforced at the API server level, so a misconfigured workload can't starve a neighbour.
+
+Network policy is enforced via **Cilium**, which provides identity-based policies at the pod level rather than just IP-based rules. This means policies travel with workloads as they scale, rather than being tied to specific IP ranges.
+
+**ArgoCD** handles all deployment. Teams define their desired state in Git; ArgoCD ensures the cluster reflects it. The multi-tenant setup uses ArgoCD's project model to scope team access — a team can manage their own Applications but can't touch another team's resources or the platform layer.
+
+## Self-Service Provisioning
+
+The key usability feature: teams get a new environment by opening a pull request against a platform repository, not by opening a ticket. A Terraform module defines the namespace, quotas, RBAC bindings, and ArgoCD project for a team. Approving the PR provisions everything. No human intervention required in the critical path.
+
+This shifted the platform team's role from provisioning work to reviewing changes — a much better use of time, and a much faster path for teams.
+
+## Outcome
+
+- 40+ teams onboarded to the platform
+- Zero-ticket environment provisioning
+- Consistent deployment patterns across the organisation
+- Network security posture enforced by default, not by convention
