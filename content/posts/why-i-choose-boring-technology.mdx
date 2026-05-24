@@ -1,0 +1,45 @@
+---
+title: "Why I Choose Boring Technology"
+date: "2024-03-10"
+tags: ["Engineering", "Philosophy", "Architecture"]
+summary: "On choosing proven tools over shiny ones in production systems, and why this is the most interesting engineering decision you can make."
+readingTime: 8
+---
+
+There's a version of this post that lectures you about Postgres being good, and that version is boring and you've read it. I want to write the other version — about what "boring technology" actually means as a decision framework, and where it breaks down.
+
+## The Standard Argument
+
+Dan McKinley's famous "choose boring technology" post makes the case well: every technology choice is a bet against your future self's time. New technology is a leveraged bet — upside when it works beautifully, downside when you're debugging a race condition in a distributed consensus protocol at 3am.
+
+The standard argument is correct. If you're running a 10-person team and you choose Kafka for a problem that Postgres could solve, you've just made your future self deal with Kafka. You've added operational complexity, a new failure mode, and a surface area of unknowns.
+
+I've lived that downside. I've also been the person who argued against Kafka when we eventually genuinely needed it, and I was wrong.
+
+## Where It Gets Complicated
+
+"Boring" is relative to your team and context, not to some objective ranking of technologies. Redis is boring to me. It might not be boring to a team that's never operated it. A tool that's battle-tested at one company is an unknown at another.
+
+The decision isn't really "new vs. old." It's: **what does this team know, what can this team learn, and what does the problem actually require?**
+
+## The Real Heuristic
+
+I use this: *how many engineers on this team, at 2am with pages firing, could debug a complete failure of this component without documentation?*
+
+For Postgres: most of them. It's not magic. The failure modes are understood. The community has seen everything. Stack Overflow has the answer.
+
+For [New Shiny Thing]: maybe two, maybe one, maybe none if the person who championed it has since left.
+
+That's the real cost of "interesting" technology. Not the learning curve in the good times. The blast radius in the bad ones.
+
+## When Boring Fails You
+
+There are problems that genuinely require the new thing. Stream processing at scale. Distributed coordination. ML feature pipelines with sub-minute freshness. If your problem domain is genuinely novel, you'll hit the walls of boring technology and it'll hurt.
+
+The tell is this: if the boring tool requires you to build substantial infrastructure around it just to make it fit your problem, you're not choosing boring. You're choosing "familiar but wrong."
+
+## Conclusion
+
+Choose boring when the problem fits it. Be honest about when the problem doesn't. The interesting part of this decision isn't the tool — it's the judgment call about which category your problem falls into, and resisting the pressure to answer that question before you actually understand the problem.
+
+The engineers I've worked with who have the best judgment here are the ones who have genuinely been burned, in both directions, and have the scar tissue to show for it.

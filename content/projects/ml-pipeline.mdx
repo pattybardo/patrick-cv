@@ -1,0 +1,36 @@
+---
+title: "ML Feature Pipeline"
+date: "2023-11"
+tags: ["Python", "Apache Beam", "BigQuery", "Kubernetes", "Architecture"]
+summary: "Batch + streaming feature computation pipeline for fraud detection models, processing 800GB/day with point-in-time correct feature retrieval."
+status: "shipped"
+---
+
+## Problem
+
+CloudFrame's risk team had a fraud detection model with good offline metrics and poor online performance. The root cause: **training-serving skew**. Features computed in batch (for training) were computed differently at inference time.
+
+I was brought in to design and build a unified feature pipeline that would eliminate the skew.
+
+## Design
+
+The core primitive is a **feature definition** — a declarative spec for how a feature is computed from raw events, what the recomputation schedule is, and what the point-in-time retrieval semantics are.
+
+```python
+@feature(
+    name="user_txn_count_7d",
+    entity="user_id",
+    ttl=timedelta(days=7),
+    freshness=timedelta(minutes=15),
+)
+def user_transaction_count_7d(events: EventStream) -> int:
+    return events.filter(type="transaction").count()
+```
+
+The same definition runs in batch (Apache Beam on Dataflow) and streaming (Beam with Kafka as source). Training jobs retrieve features with `as_of` timestamps, guaranteeing no future leakage.
+
+## Outcome
+
+- Eliminated training-serving skew for all 14 features in production
+- Model AUC improved from 0.87 to 0.93 after retraining with consistent features
+- Pipeline processes **800GB/day** at P95 freshness of **8 minutes**

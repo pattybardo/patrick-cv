@@ -1,0 +1,25 @@
+---
+title: "Real-Time Analytics Dashboard"
+date: "2021-04"
+tags: ["TypeScript", "React", "WebSocket", "Kafka", "Node.js"]
+summary: "Sub-second live dashboard for operational metrics, serving 200+ concurrent viewers without degradation."
+status: "shipped"
+---
+
+## Context
+
+Built at Vanta Labs as the front-end face of the streaming pipeline. Leadership wanted a live view of customer event throughput and anomaly signals. The constraint: it had to update in real time without polling.
+
+## Architecture
+
+A Node.js gateway subscribes to Kafka topics for each customer, maintains a WebSocket connection per viewer, and fans out updates as they arrive. The tricky bit was fan-out at scale: 200 viewers watching the same customer dashboard should not create 200 Kafka consumers.
+
+Solved with a **subscription map**: one consumer per customer, with an in-process broadcast to all connected sessions watching that customer. Memory overhead is O(customers), not O(viewers).
+
+## React Side
+
+Charts needed to update at up to 10 updates/second without causing layout thrash. Used a double-buffer pattern: incoming updates write to a staging buffer, a 100ms `requestAnimationFrame` loop flushes the buffer and triggers a single React re-render. Dropped from 40% CPU on the render thread to 8%.
+
+## Outcome
+
+Shipped to all customers on the Enterprise tier. Became a selling point in sales demos. Occasionally gets mentioned in CSAT responses which is how you know people actually use it.

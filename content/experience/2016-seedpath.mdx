@@ -1,0 +1,33 @@
+---
+title: "Backend Engineer"
+company: "Seedpath"
+startDate: "2016-09"
+endDate: "2019-05"
+location: "London, UK"
+tags: ["Python", "Django", "PostgreSQL", "Celery", "Docker", "React"]
+summary: "First engineering hire at a fintech seed-stage startup. Built the core transaction processing service and onboarding platform from zero to Series A."
+---
+
+## The Origin
+
+Seedpath was three people in a WeWork when I joined. The founders had a working prototype in Django and a term sheet. My job was to turn the prototype into something production-worthy before the VC money arrived and expectations scaled.
+
+The phrase I heard most in year one was: *"make it work first, make it right when we have time."* The second half of that sentence never arrives at a startup. I learned to push back on false dichotomies early.
+
+## What I Shipped
+
+### Transaction Processing
+
+Built the core financial transaction service — the component that moves money between ledger accounts, ensures double-entry integrity, and generates the audit trail that regulators care about.
+
+Postgres's transaction isolation model was a friend here. We modelled ledger entries as append-only rows with no UPDATE path, enforced via triggers. The DB became the source of truth; the application layer became stateless by design.
+
+### The Onboarding Platform
+
+KYC (Know Your Customer) was our biggest acquisition friction point. The old flow took 14 steps over two sessions. I rebuilt it as a state-machine-driven wizard in React, backed by a Django API, with document upload handled by a Celery task queue.
+
+Completion rate improved from 34% to 71% in the first month after launch.
+
+## Learning
+
+First time I owned production incidents end-to-end. Had a midnight outage on a bank holiday caused by a Celery memory leak. Fixed it with a process restart at 2am, root-caused it properly the next day, wrote the post-mortem, and made the on-call runbook. Turned out to be some of the most valuable learning of my career.
