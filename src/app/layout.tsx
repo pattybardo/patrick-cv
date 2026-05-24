@@ -16,11 +16,11 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Patrick Bardo — Engineer',
-  description: 'Staff Software Engineer. A reverse-chronological record of systems built, problems solved, and patterns discovered.',
+  title: 'Patrick Bardo — Senior Platform Engineer',
+  description: 'Senior Platform Engineer at Zenseact. A reverse-chronological record of infrastructure built, systems scaled, and problems solved.',
   openGraph: {
-    title: 'Patrick Bardo — Engineer',
-    description: 'Staff Software Engineer. A reverse-chronological record of systems built, problems solved, and patterns discovered.',
+    title: 'Patrick Bardo — Senior Platform Engineer',
+    description: 'Senior Platform Engineer at Zenseact. A reverse-chronological record of infrastructure built, systems scaled, and problems solved.',
   },
 }
 

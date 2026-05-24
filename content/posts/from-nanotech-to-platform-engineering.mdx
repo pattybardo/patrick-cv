@@ -1,0 +1,46 @@
+---
+title: "From Nanotechnology to Platform Engineering"
+date: "2024-01-18"
+tags: ["Career", "Engineering", "Philosophy"]
+summary: "What a degree in nanotechnology engineering taught me about building distributed systems — and why the scientific method is the most underrated engineering practice."
+readingTime: 7
+---
+
+I get asked about the career pivot a lot. *You studied nanotechnology — how did you end up in platform engineering?* The honest answer is that it didn't feel like a pivot from the inside. It felt like the same job with different atoms.
+
+That sounds glib, so let me be specific about what I mean.
+
+## What Research Actually Teaches You
+
+A nanotechnology degree at Waterloo is, in practice, a degree in experimental design and quantitative reasoning applied to materials science. You spend four years learning how to:
+
+1. Define a testable hypothesis
+2. Design an experiment that isolates the variable you care about
+3. Measure the result with appropriate rigour
+4. Distinguish between "the data shows X" and "I believe X"
+
+The fourth one is the hard part. It requires a kind of epistemic discipline — holding your own conclusions at arm's length, not because you doubt your competence, but because the data might be telling you something different from what you expect to hear.
+
+In the Frank Gu Lab, I was doing synthesis and characterisation of mesoporous carbon. The interesting problems weren't the chemistry — they were analytical. Why did this batch of material have a different pore size distribution than the last one? What changed? Was it the synthesis temperature, the precursor ratio, or the fact that I used a different stirring plate? Untangle the variables. Design the next experiment to isolate the cause. Measure again.
+
+This is exactly what debugging a distributed system looks like.
+
+## The Transfer
+
+When I started writing software seriously, I noticed I had some instincts that weren't obvious to people who had come up entirely through computer science. I naturally wanted to:
+
+- **Change one thing at a time** when diagnosing a production issue, rather than making multiple changes simultaneously and being unable to attribute improvement
+- **Record what I changed and when** before making production changes — the lab notebook habit
+- **Ask "how do we know this is true?"** before acting on monitoring data, because observability systems lie in subtle ways just like characterisation equipment does
+
+Platform engineering, in particular, rewards this disposition. The systems you build are the instruments other teams use to understand and operate their own services. If your observability platform gives misleading signals, engineers make decisions on bad data — the same failure mode as a miscalibrated spectrometer in a research context.
+
+## What the Degree Didn't Teach Me
+
+Software development as a collaborative, iterative, version-controlled practice. Nanotechnology research is mostly solo work with occasional lab meetings. The social infrastructure of good engineering — code review, architecture discussions, incident retrospectives, the gentle art of disagreeing with a senior engineer in a pull request comment — none of that came from the degree. It came from working with good engineers and paying attention.
+
+## The Actual Lesson
+
+Unusual backgrounds are assets when they transfer non-obvious skills. The transfer isn't automatic — you have to notice what you know and deliberately apply it in the new context. But if you came to software through physics, biology, finance, or anything with a serious quantitative component, there's almost certainly something in that background that most software engineers don't have.
+
+The question to ask is: what did my old field teach me to notice that my new colleagues walk past without seeing?

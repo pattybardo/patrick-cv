@@ -28,8 +28,12 @@ export default function Home() {
               </p>
             )}
             <p className="font-sans text-base text-text-muted max-w-lg mt-4 leading-relaxed">
-              Engineer who builds systems that scale. Interested in distributed infrastructure,
-              developer tooling, and the craft of writing software that outlasts its author.
+              Platform engineer at the intersection of infrastructure and autonomy. I build the
+              systems that let engineering teams move fast without breaking things — developer
+              platforms, observability pipelines, and the networking layer underneath.
+            </p>
+            <p className="font-mono text-xs text-text-muted mt-2 tracking-wide">
+              Gothenburg, Sweden
             </p>
             <div className="flex items-center gap-6 mt-8">
               <a
@@ -91,6 +95,39 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Education */}
+      <section className="border-t border-border">
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-12 md:col-span-2">
+              <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-text-muted sticky top-20">
+                EDUCATION
+              </div>
+            </div>
+            <div className="col-span-12 md:col-span-10 space-y-3">
+              <div className="border border-border p-5 hover:border-accent transition-all duration-100">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="font-sans text-base font-semibold text-text-primary">University of Waterloo</h3>
+                    <p className="font-sans text-sm text-text-muted mt-0.5">Bachelor of Engineering, Nanotechnology Engineering</p>
+                  </div>
+                  <span className="font-mono text-xs text-text-muted whitespace-nowrap shrink-0">2014–2019</span>
+                </div>
+              </div>
+              <div className="border border-border p-5 hover:border-accent transition-all duration-100">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="font-sans text-base font-semibold text-text-primary">Technische Universiteit Delft</h3>
+                    <p className="font-sans text-sm text-text-muted mt-0.5">International Exchange — Chemical Engineering</p>
+                  </div>
+                  <span className="font-mono text-xs text-text-muted whitespace-nowrap shrink-0">2017–2018</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-border">
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4">
@@ -101,7 +138,7 @@ export default function Home() {
             <a href="https://github.com/pattybardo" target="_blank" rel="noopener noreferrer" className="font-mono text-[10px] uppercase tracking-widest text-text-muted hover:text-accent transition-colors duration-100">
               GITHUB
             </a>
-            <a href="mailto:dr.p.bardo@gmail.com" className="font-mono text-[10px] uppercase tracking-widest text-text-muted hover:text-accent transition-colors duration-100">
+            <a href="mailto:patryk.bardo@gmail.com" className="font-mono text-[10px] uppercase tracking-widest text-text-muted hover:text-accent transition-colors duration-100">
               EMAIL
             </a>
           </div>
