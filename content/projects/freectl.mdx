@@ -1,0 +1,37 @@
+---
+title: "freectl"
+date: "2025-01"
+tags: ["Go", "Kubernetes", "GitOps", "Helm", "Platform Engineering"]
+summary: "A Go CLI for managing a multi-cluster Kubernetes platform — rendering manifests fast, bootstrapping clusters, and generating tenant configurations from simple specs."
+status: "shipped"
+---
+
+## The Problem
+
+We were managing a multi-cluster Kubernetes platform with Helm for templating and a GitOps flow on top. The pattern that naturally emerges here is hydrated manifests: you render your Helm templates into plain YAML and commit the result to git, so your GitOps controller applies raw YAML rather than running Helm at deploy time. This keeps the applied state explicit and auditable.
+
+The downside at scale is duplication. When you have multiple clusters with similar but not identical configurations, you end up committing variations of the same YAML across many directories. Values files diverge. A config change that should be one line becomes a sprawl of similar-but-different files across the repo.
+
+The other problem I hit immediately: rendering all the Helm charts in a bash loop — one `helm template` call per chart per cluster, sequentially — took over two minutes for a full re-render. Pre-commit hooks that take two minutes don't stay as pre-commit hooks for long.
+
+## What freectl Does
+
+`freectl` is a Go CLI built with [Cobra](https://github.com/spf13/cobra) that replaced the bash loop and kept growing from there.
+
+The first thing it solved was speed. Running all Helm renders concurrently with goroutines brought the full re-render from over two minutes to under ten seconds. That's the difference between a check engineers tolerate and one they disable.
+
+It then grew into the primary operational interface for the platform:
+
+**Manifest rendering** — `freectl render` renders all manifests for all clusters, or scoped to a specific cluster, concurrently. The output is committed to git for the GitOps controller to pick up.
+
+**Cluster bootstrapping** — `freectl bootstrap` stands up a new cluster from scratch: installs the baseline platform tooling, applies the initial configuration, and registers the cluster with the platform. What was previously a sequence of manual steps you had to reconstruct from memory became a single command with a predictable outcome.
+
+**Tenant generation** — `freectl generate tenant` takes a simple spec — team name, required namespaces, resource quotas, a few other properties — and generates the full set of manifests a tenant needs to operate on the platform. Tenants get near-full extendibility without needing to understand platform internals. The golden path is the path of least resistance.
+
+**Variable replacement** — Values files support variable substitution, so common config (cluster name, region, environment tier) is defined once and referenced everywhere. This eliminated most of the duplication that hydrated manifests normally create at multi-cluster scale.
+
+## Honest Assessment
+
+I open-sourced freectl. In its current state it's overfit to the internal environment — the interfaces are more opinionated than they need to be, and extending it for a meaningfully different setup would take more work than I'd want to ask of someone picking it up cold. The bootstrapping and minting features in particular added scope that pushed the tool into doing more than one tool probably should.
+
+The outcomes were good. Engineers have a fast, well-documented interface for day-to-day platform operations, and tenant onboarding that previously required direct platform team involvement can largely be self-served. If I were building it again I'd think harder about the extension points earlier, so the interface was clean enough to be genuinely useful outside the context it was built for.

@@ -4,36 +4,50 @@ company: "Zenseact"
 companyUrl: "https://zenseact.com"
 startDate: "2024-10"
 location: "Gothenburg, Sweden"
-tags: ["Go", "Kubernetes", "AWS", "Terraform", "Platform Engineering", "Cilium"]
-summary: "Building the AWS cloud platform from the ground up, owning the Kubernetes ecosystem and all cloud infrastructure for autonomous driving software development at scale."
+tags: ["Go", "Kubernetes", "AWS", "Terraform", "Platform Engineering", "Cilium", "GitOps", "EKS"]
+summary: "Building Zenseact's AWS cloud platform from a blank page — owning the Kubernetes ecosystem, CI infrastructure, and developer experience for the teams building autonomous driving software."
 ---
 
-## The Role
+## The Mandate
 
-Transitioned into a foundational platform engineering role responsible for building Zenseact's AWS cloud platform from scratch. The mandate was broad: own the Kubernetes ecosystem and be responsible for everything running in AWS — networking, compute, storage, security, and the developer experience on top of it all.
+I transitioned into the platform engineering role as we moved from pre-study into execution on Zenseact's AWS cloud migration. The mandate was broad: own the Kubernetes ecosystem, own everything running in AWS, and build a platform the teams building autonomous driving software could actually rely on. Networking, compute, storage, security, developer experience — all of it.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+The platform had to operate in a hybrid setup. Workloads span on-premises OpenShift clusters, AWS EKS, and HPC compute, and everything needs to talk to everything. Designing for that interoperability from the start — rather than retrofitting it after the fact — was one of the foundational decisions we got right.
 
-## Platform Architecture
+## Architecture and Terraform
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+I was involved in the pre-study that produced the platform architecture before a line of infrastructure was written. With hindsight there are things I'd change: I'd put all clusters in a managed central account rather than tying them to individual accounts, and I'd think harder about the authentication model earlier to avoid managing permission sets per account just to gain cluster access. But with the information we had, I think we designed something solid.
 
-```hcl
-# Lorem ipsum infrastructure example placeholder
-module "eks_cluster" {
-  source  = "terraform-aws-modules/eks/aws"
-  # Configuration to be documented
-}
-```
+The piece of Terraform automation I'm most proud of: I built a pipeline where the `terraform plan` output is captured and tied to the pull request. The exact change the team reviews and approves is the exact change that gets applied — no re-planning at apply time, no drift between what was approved and what ran. If `main` changes after your PR is approved, your plan is invalidated and you re-run it. There's a theoretical race condition that we've deliberately chosen not to close; we're a three-person team, and the complexity budget to solve a purely theoretical problem at our scale isn't justified.
 
-## Kubernetes Ecosystem Ownership
+## freectl
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+For managing the platform's Kubernetes manifests I built `freectl` — a Go CLI using Cobra that became the primary operational interface for the whole platform. The immediate problem it solved: rendering all Helm charts across all clusters in a bash loop took over two minutes. With goroutines, the same full render takes under ten seconds.
 
-## What I'm Learning
+That was the origin. It grew from there into cluster bootstrapping, automated tenant manifest generation from simple specs, and config variable replacement in values files to cut duplication across clusters. I open-sourced it, though in its current form it's overfit to the internal environment. The outcomes were good regardless. [More detail in the project writeup.](/projects/freectl)
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+## Observability
 
----
+I drove and built the central observability cluster independently. My view is that centralising observability is one of the highest-leverage investments a platform team can make — abstracting metrics collection and alerting into the platform costs the team very little, and the alternative is every tenant team solving the same problems badly in isolation. Not everyone shared this priority, and the cluster is underutilised relative to what it could enable. That's probably my biggest disappointment in the work.
 
-*This section is a work in progress — more detail coming soon.*
+In November 2024, Bazel remote execution went down and CI was severely degraded for nearly two weeks. I led the root-cause investigation that traced it to a cascading Ceph storage latency issue — not the Buildbarn instance or the OpenShift cluster where most of the troubleshooting effort was focused. [I wrote about this at length.](/posts/no-check-november)
+
+## The Ecosystem
+
+**Cilium** is the right model for a multi-tenant platform — eBPF-based identity policy enforcement, network policy that doesn't break when pods restart, and Gateway API for traffic management. The caveat is that it requires someone willing to own the complexity, and the Cilium-flavoured implementations of upstream specs will always lag a bit. If I were building again without a guaranteed driver for it, I'd seriously consider a simpler Envoy-based service mesh and keep the CNI decoupled.
+
+**ArgoCD**: I should have pushed harder to centralise it. I made the argument early, it didn't stick, and now there are twenty separate UIs to log into for any sensitive operation, and deployment patterns in the wild that are genuinely wrong. The deployment patterns are the worse problem — some services take thirty minutes to deploy something that should take one. I could have fixed this earlier and didn't.
+
+**Blue-green cluster lifecycle**: proud of the design. I wish we'd automated the tenant workload cutover more tightly so I could fully close the loop.
+
+**Renovate**: wired into the full golden path dev flow, with automated dependency updates tested and progressively promoted. I demo'd this and people looked at me like I was describing something exotic. I think it's just table stakes.
+
+**GitHub**: I fought for this for a long time. It took a lot of discussions. It has enough traction now that it's going to succeed.
+
+**Internal CA**: I own our certificate infrastructure. I have strong opinions about how it should work and will leave it at that.
+
+## The Outcome
+
+I came into the cloud migration with a specific ambition: developers should never have to set an alarm for 5am to do a rollout. No planned downtime windows. No weekend work for routine infrastructure changes.
+
+That's largely how it works now. Teams ship on normal hours at a faster cadence than before, changes have a smaller blast radius, and the toil is being automated away incrementally. I pushed for this specifically from the start, and I'll take credit for it.

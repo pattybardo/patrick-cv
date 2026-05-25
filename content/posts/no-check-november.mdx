@@ -1,0 +1,107 @@
+---
+title: "No Check November"
+date: "2024-11-20"
+tags: ["Observability", "Incident", "Debugging", "Distributed Systems", "CI"]
+summary: "A two-week CI outage, a dashboard that said everything was fine, and what happens when you question the premise of the evidence instead of just the conclusion."
+readingTime: 9
+---
+
+There's a tradition in November called No-Shave November. You don't shave for a month.
+
+In November 2024, we had No Check November. Developers couldn't push changes through CI for nearly two weeks. The name came from the meme Slack channel. It was very funny if you were not the one trying to fix it.
+
+## What Was Breaking
+
+A bit of background, because the story doesn't make sense without it.
+
+We use [Bazel](https://bazel.build/) as the build system for a large monorepo of autonomous driving software. Bazel's remote execution protocol lets you offload compilation and test execution to a cluster of remote workers rather than building locally — for a monorepo of our size, this is the difference between a build taking minutes and a build taking most of a day. The remote execution backend we run is [Buildbarn](https://github.com/buildbarn/bb-storage).
+
+Buildbarn is worth understanding from an I/O perspective. The storage component handles the inputs and outputs of individual build and test actions. A lot of those actions are small — compiling a single file, running a single unit test. The objects being stored are on the order of kilobytes. The rate is high. Any increase in storage latency hits Buildbarn hard and fast, because there are thousands of small reads and writes happening at any moment and none of them has a generous latency budget.
+
+This matters for what comes later.
+
+## The Unseen Trigger
+
+On October 26th, our Ceph storage cluster filled to capacity and stopped accepting writes. This wasn't subtle — it caused a visible incident, was handled by the relevant teams, and was resolved.
+
+During the recovery, as part of freeing up space, a 30 TiB S3 bucket was deleted. A network analysis tool that had been storing data nobody was using anymore. Reasonable call under the circumstances.
+
+CI came back up. Normal operations resumed. Nobody thought anything more of it.
+
+## November 4th
+
+The first signals appeared on a Monday morning. Buildbarn storage liveness probes started failing. Zuul — our CI orchestration layer — was getting stuck. Jobs that should take a few minutes to start were sitting at "Preparing job workspace" for over an hour.
+
+The CI/CD services team restarted Buildbarn. It came back. It fell over again.
+
+The obvious assumption: the problem was in Buildbarn, or in the OpenShift cluster it ran on. That's where the symptoms were. That's where the investigation went.
+
+## Nine Days of the Wrong Layer
+
+What followed was nine days of increasingly exhaustive troubleshooting, all aimed at the application and cluster layer.
+
+Zookeeper — the coordination service Zuul depends on — was unstable. It was scaled down from five nodes to three, had its memory doubled, and the team got on a call with its lead developer. Zuul's persistent volumes were deleted and recreated. HAProxy timeouts for Gerrit were adjusted after repository cloning started timing out. CSI driver pods were recreated after dd-tests suggested slow I/O on the underlying disks.
+
+On November 8th, five days in and out of targeted leads, the decision was made to do a full cluster nuke: complete scale-down, reboot every node, bring everything back up fresh. This is the point where you've exhausted the targeted interventions and you're hoping the problem clears on its own.
+
+It didn't. Services came back up. The instability returned.
+
+A Red Hat support case was opened. A task force formed, collocated in the office, multiple syncs per day. Through all of this, the storage team's position was consistent: their dashboard was green. The cluster was healthy. The problem was somewhere else.
+
+## The Dashboard That Was Right About the Wrong Thing
+
+Here's the thing about the storage team's dashboard: it wasn't wrong. Ceph wasn't catastrophically broken. The cluster was up, it was accepting writes, it was not in a failed state. The dashboard was built to detect failure, and there was no failure to detect.
+
+What the dashboard couldn't see was performance degradation. Specifically: a small number of OSDs — the storage daemon processes responsible for actual disk operations — were experiencing severe apply latency. One OSD at a time would spike to a ceiling of around 258 seconds for apply operations. When an OSD hit that ceiling, read and write latencies started climbing cluster-wide.
+
+A dashboard that only turns red when things are catastrophically broken will tell you everything is fine until very shortly before everything is catastrophically broken. For degraded performance, saturation in a specific component, latency that hasn't yet caused outright failure — it's invisible.
+
+This isn't a bug in the dashboard. It's a design choice. Dashboards are built by people with assumptions about what matters. The storage team's dashboard was built for catastrophe detection and was very good at it. Nobody had built the performance degradation dashboard, because performance degradation hadn't caused an incident before. Until it had.
+
+## Getting Access
+
+I was skeptical of the "everything is green" answer. Not because I thought the storage team was wrong or being dishonest — their dashboard genuinely showed green. But a dashboard is one piece of information, and that information is only as good as the assumptions baked into it.
+
+I pushed for access to the storage team's internal Grafana instance. This required some insistence. *The cluster is healthy*, they said. *I understand that*, I said. *I'd like to look at the raw metrics.*
+
+What I found: OSD apply latency graphs showing a small cluster of OSDs — co-located on the same node — spiking repeatedly to that ~258s ceiling. CPU metrics showing one node fully throttled, wherever the deletion operation was concentrated. These weren't signals of a broken system. They were signals of a heavily loaded one, in a very specific and localised way.
+
+## Following the Thread
+
+The replication factor was the diagnostic key.
+
+Ceph stores different types of data with different replication settings. Block storage — the kind used for most Kubernetes persistent volumes — uses a replication factor of 2. S3 object storage uses a replication factor of 3.
+
+A write to S3 touches disks on 3 different nodes. The disk I/O pattern I was seeing showed 3 nodes with elevated I/O. That's not coincidence — that's the replication factor showing up in the metrics. The problem was in S3, not in block storage.
+
+Digging into the S3 pool metrics: the bucket index was being hammered. Every deleted object in an S3 bucket requires an update to the bucket's index — a small metadata operation that tracks object counts, sizes, ETags. If you're deleting a very large number of objects, you're doing a very large number of index operations. And they queue.
+
+One hypothesis I raised: the dd-tests the other teams were using to measure local disk write speeds were being interfered with by the Ceph backend. If Ceph is saturated, a test ostensibly measuring independent local disk performance will look like a local disk problem — because the backend it's writing through is what's degraded, not the disk itself. A Red Hat kernel expert confirmed this when we consulted them. It meant that several days of data that appeared to implicate the local disks had been measuring Ceph saturation at one remove the whole time.
+
+At this point the thread led back to October 26th. The 30 TiB S3 bucket deletion hadn't finished. It was still running.
+
+## The Math
+
+Object count in the S3 data pool on November 20th: approximately 22% of what it was on October 29th. Seventy-eight percent of the objects had been deleted over roughly three weeks. The deletion had been ongoing for the entire incident.
+
+There's a documented issue in the version of Ceph we were running where large-scale object deletion causes OSD performance problems — the deletion load saturates the OSD apply queue. Red Hat had documented it. It just hadn't been relevant to us before, because we'd never deleted anything at this scale.
+
+The short-term fix confirmed the hypothesis: on November 14th, the RGW component — the RADOS Gateway that handles S3 API traffic — hung and was restarted. The effect was immediate: Buildbarn and Zuul performance surged. Resetting the gateway flushed the queue of pending requests, temporarily relieving the OSD load. We put a cronjob in place to restart the RGW every six hours.
+
+On November 20th, the deletions completed. The cronjob was removed. CI was stable.
+
+## What This Is Actually About
+
+The incident post-mortem focuses on the technical chain: deletion causes OSD saturation causes latency causes Buildbarn liveness probe failures causes CI outage. That's accurate.
+
+But the reason this took two weeks instead of two or three days is an observability story, not a storage story.
+
+The storage team's dashboard said green. That answer was accepted. The investigation stayed at the application layer for nine days. The cluster was nuked. The problem persisted. The storage layer was still not questioned, because the dashboard still said green.
+
+A dashboard abstracts information to make it digestible. That's what dashboards are for. But the abstraction is lossy, and the parts that get abstracted away are precisely the parts you don't know you need until you need them.
+
+[Golden signals](https://sre.google/sre-book/monitoring-distributed-systems/) exist because individual metrics lie in isolation. Latency, traffic, errors, saturation — together they constrain the space of possible explanations. Looking at any one of them, especially through a pre-built dashboard designed for a different failure mode, is how you spend nine days changing the wrong things.
+
+The better approach is the one that feels slower at first: start from the raw metrics. Ask what each signal is actually measuring — and equally, what it *isn't* measuring. Treat "the dashboard is green" as one data point, not as an answer. Treat your own hypotheses the same way. When I proposed that the dd-tests might be measuring Ceph saturation rather than local disk health, I needed external confirmation before I acted on it — not because I doubted the reasoning, but because a hypothesis you can't independently validate is still just a hypothesis.
+
+The goal isn't the one signal that explains everything. It's finding the set of signals that are only consistent with one explanation. Everything else is just noise you haven't eliminated yet.
