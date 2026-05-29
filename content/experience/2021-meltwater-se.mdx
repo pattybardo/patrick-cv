@@ -6,27 +6,38 @@ startDate: "2021-01"
 endDate: "2022-02"
 location: "Gothenburg, Sweden"
 tags: ["Elasticsearch", "Go", "Python", "Search", "Observability"]
-summary: "Information retrieval and storage on Meltwater's petabyte-scale Elasticsearch cluster, serving thousands of customers daily. Led the migration from Elasticsearch 1.7 to 7.x."
+summary: "Information retrieval and storage on Meltwater's petabyte-scale Elasticsearch cluster. Led the migration from Elasticsearch 1.7 to 7.x and reworked how shards were distributed to push indexing throughput while keeping the cluster cost-efficient."
 ---
 
-## The Problem Space
+## What I Worked On
 
-Meltwater's core product is media intelligence — tracking what the world is saying across news, social, and broadcast media. At the heart of that is a search cluster that needs to store and retrieve enormous volumes of content quickly, for thousands of customers simultaneously, with query patterns that are unpredictable by nature.
+This was my first proper software job. I joined the team that owned Meltwater's search platform — a big Elasticsearch cluster plus the APIs other teams used to store and search documents in it. Media intelligence means tracking what's being said across news, social, and broadcast, so the cluster takes a lot of writes and serves a lot of unpredictable queries from thousands of customers.
 
-When I joined, the cluster was running Elasticsearch 1.7 — a version that was end-of-life and carrying years of accumulated technical debt. The mission was to migrate to 7.x without disrupting the customers who depended on it every day.
+I spent most of my first stretch on the upgrade from Elasticsearch 1.7 to 7.x.
 
-## The Elasticsearch Migration
+## The Migration
 
-Migrating across six major versions of Elasticsearch is not a simple upgrade. The query DSL had changed substantially, the mapping types had been removed, and the internal data formats were incompatible — meaning a rolling in-place upgrade wasn't an option. We needed a parallel-cluster approach with a cutover strategy.
+1.7 was years past end-of-life and had collected a lot of debt. Jumping six major versions isn't an upgrade you can do in place — the query DSL had changed, mapping types were gone, and the on-disk formats weren't compatible. So we ran two clusters side by side and cut over:
 
-The migration ran in phases:
-1. **Shadow indexing** — new documents written to both the old and new cluster
-2. **Historical backfill** — replaying the existing corpus into the new cluster, verifying document counts and spot-checking query results
-3. **Query compatibility layer** — a thin translation layer that let the application tier continue using legacy query patterns while we incrementally updated them
-4. **Traffic cut-over** — shifting read traffic to the new cluster with the ability to roll back instantly
+1. **Shadow indexing** — write new documents to both the old and new cluster
+2. **Backfill** — replay the existing corpus into the new cluster and check document counts and query results against the old one
+3. **Compatibility shim** — a thin translation layer so the application tier could keep using the old query patterns while we updated them one at a time
+4. **Cut-over** — move read traffic over with a fast path back if something looked wrong
 
-The result was a cluster capable of handling complex nested aggregations and significantly higher concurrent query loads, with modern features like cross-cluster replication for resilience.
+It went out without a customer-facing incident, which for a migration of that size is most of what you're hoping for. The new cluster also handled nested aggregations and higher concurrent query loads that the old one couldn't.
+
+## Shard Distribution
+
+The more interesting work was on hotspots. Elasticsearch decides where to put shards based mostly on keeping the shard *count* roughly even across nodes, which quietly assumes every shard does about the same amount of work. Ours didn't. Some shards were getting hammered and others sat idle, so a handful of nodes would redline while the rest coasted — and that's where the indexing lag and the 2am pages came from.
+
+A previous intern project had already built a load-driven optimiser for this: estimate the actual load per shard from Prometheus, then move shards around to even out the load per node instead of the count. It used Mean Squared Error against the average node load to decide whether a move helped. I picked that system up and made a couple of changes that mattered.
+
+First, I swapped the error function. MSE was fine, but I wanted something that punished a node sitting far from the mean more harshly than MSE did, so the optimiser would prioritise pulling down the genuinely overloaded nodes rather than nibbling at small imbalances everywhere. That alone gave us flatter load distributions.
+
+Second, I added a disk step. Load and disk usage can't both be optimised at once — moving a shard to balance load can wreck your disk balance and vice versa. So I had it check the disk MSE across nodes first: if that was above a threshold, run a disk-balancing pass before the load pass. The obvious benefit was better disk distribution. The less obvious one turned out to be the bigger win — the disk pass shuffles the hot shards into a new arrangement, and because shard placement is boxed in by hard constraints (primaries and replicas can't share a node, replicas have to sit in different availability zones), a fresh starting topology sometimes let the load optimiser reach a *lower* minimum than it could from where it started. You're effectively giving it a different basin to descend into.
+
+The combined effect was that we could index more for the same hardware — around 200k documents per second on a cluster that wasn't much bigger than before, without throwing nodes at the problem the way the original incident response had.
 
 ## Observability
 
-A cluster at petabyte scale needs good observability to operate safely. Contributed to the monitoring and alerting infrastructure — tracking shard health, JVM garbage collection patterns, search latency percentiles, and indexing throughput — so the team could detect degradation before customers noticed it.
+A petabyte-scale cluster needs decent monitoring to run safely, so I worked on the alerting around shard health, JVM garbage collection, search latency percentiles, and indexing throughput — enough to catch degradation before customers felt it. Being on-call for it every six weeks was a fast way to learn which of those signals actually mattered.

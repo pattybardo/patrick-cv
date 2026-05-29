@@ -12,7 +12,7 @@ summary: "Building Zenseact's AWS cloud platform from a blank page — owning th
 
 I transitioned into the platform engineering role as we moved from pre-study into execution on Zenseact's AWS cloud migration. The mandate was broad: own the Kubernetes ecosystem, own everything running in AWS, and build a platform the teams building autonomous driving software could actually rely on. Networking, compute, storage, security, developer experience — all of it.
 
-The platform had to operate in a hybrid setup. Workloads span on-premises OpenShift clusters, AWS EKS, and HPC compute, and everything needs to talk to everything. Designing for that interoperability from the start — rather than retrofitting it after the fact — was one of the foundational decisions we got right.
+The platform had to work in a hybrid setup from day one. Workloads run across on-premises OpenShift, AWS EKS, and HPC compute, and all of it has to talk to each other. Designing for that up front instead of bolting it on later was one of the things I'm glad we didn't get wrong.
 
 ## Architecture and Terraform
 
@@ -28,7 +28,7 @@ That was the origin. It grew from there into cluster bootstrapping, automated te
 
 ## Observability
 
-I drove and built the central observability cluster independently. My view is that centralising observability is one of the highest-leverage investments a platform team can make — abstracting metrics collection and alerting into the platform costs the team very little, and the alternative is every tenant team solving the same problems badly in isolation. Not everyone shared this priority, and the cluster is underutilised relative to what it could enable. That's probably my biggest disappointment in the work.
+I built the central observability cluster on my own. I think centralising observability is one of the better things a platform team can do — pulling metrics collection and alerting into the platform costs us almost nothing, and the alternative is every team solving the same problem badly by themselves. Not everyone agreed it was a priority, and the cluster is underused compared to what it could do. That's probably my biggest disappointment in the work.
 
 In November 2024, Bazel remote execution went down and CI was severely degraded for nearly two weeks. I led the root-cause investigation that traced it to a cascading Ceph storage latency issue — not the Buildbarn instance or the OpenShift cluster where most of the troubleshooting effort was focused. [I wrote about this at length.](/posts/no-check-november)
 

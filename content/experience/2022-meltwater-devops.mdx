@@ -6,31 +6,31 @@ startDate: "2022-02"
 endDate: "2024-01"
 location: "Gothenburg, Sweden"
 tags: ["Kubernetes", "ArgoCD", "ELK Stack", "Backstage", "DevOps", "Terraform"]
-summary: "Engineering enablement across a 40+ team organisation — multi-tenant Kubernetes, a logging pipeline handling over a billion documents a day, and the tooling layer that tied it together."
+summary: "Engineering enablement across a 40+ team organisation — multi-tenant Kubernetes, a logging pipeline doing over a billion documents a day, and the tooling that held it together."
 ---
 
 ## Context
 
-After two years embedded in Meltwater's search platform, I moved into the Engineering Enablement function — the team responsible for the infrastructure and tooling that every other engineering team depended on. The company was at a scale where platform inconsistency was becoming a real tax on velocity: 40+ teams, multiple clusters, and a patchwork of deployment conventions that had grown organically.
+After a couple of years on the search platform I moved over to Engineering Enablement — the team that owns the infrastructure and tooling everyone else builds on. By then the company had 40+ teams, several clusters, and deployment conventions that had grown organically and didn't agree with each other. The inconsistency was starting to cost everyone time, and that's mostly what I worked on.
 
 ## Multi-Tenant Kubernetes
 
-Operated and improved a fleet of multi-tenant Kubernetes clusters serving teams across the organisation. The challenge at this scale isn't the technology — Kubernetes does what it does — it's the **operational model**: how do you give teams enough autonomy to move fast while maintaining the security boundaries and resource guarantees that multi-tenancy requires?
+I helped run and improve a fleet of multi-tenant Kubernetes clusters. Kubernetes itself does what it says on the tin; the hard part was the operational model — giving teams enough room to move on their own without letting one team's mistake spill into another's.
 
-We built a namespace-per-team model with resource quotas, network policies enforced via Cilium, and a self-service provisioning workflow that let teams get a new environment without opening a ticket.
+We landed on a namespace-per-team setup with resource quotas, network policies through Cilium, and a self-service flow so a team could get a new environment by opening a PR instead of filing a ticket and waiting.
 
 ## The Logging Pipeline
 
-Owned the maintenance and improvement of the ELK (Elasticsearch, Logstash, Kibana) stack, which was indexing **over a billion documents a day** across Meltwater's product surface. At that scale, the interesting problems aren't about whether Elasticsearch can handle the load — it's about managing index lifecycle, shard allocation strategy, and what happens when a customer query pattern changes unexpectedly and hits a hot shard.
+I owned the ELK stack, which was indexing **over a billion documents a day** across the product. At that volume the day-to-day work isn't "can Elasticsearch keep up" — it's index lifecycle, shard allocation, and what happens when a customer's query pattern shifts overnight and lands on a hot shard.
 
-Key improvements included moving to ILM (Index Lifecycle Management) for automated rollover and retention, tuning JVM heap allocation across the data tier, and building a per-tenant routing layer so a noisy pipeline couldn't impact other customers.
+The main improvements: moving to ILM for automated rollover and retention so we weren't babysitting indices by hand, tuning JVM heap across the data tier, and adding a per-tenant routing layer so one loud pipeline couldn't drag everyone else down with it.
 
 ## ArgoCD at Scale
 
-Introduced and supported ArgoCD as the GitOps deployment tool for over 40 teams. The multi-tenant setup was the hard part: a single ArgoCD installation serving many teams, with RBAC configured so teams could manage their own applications without being able to interfere with each other's — or with platform-managed infrastructure.
+I brought in ArgoCD as the GitOps deployment tool for 40+ teams. The single-installation-for-everyone part was the tricky bit: RBAC had to be set up so teams could manage their own applications without stepping on each other or on platform-managed infrastructure.
 
-Adoption was gradual and collaborative. We ran internal workshops, created opinionated application templates, and embedded ArgoCD patterns into the self-service provisioning workflow so new teams started on GitOps from day one.
+I didn't try to force adoption. We ran workshops, shipped opinionated application templates, and wired ArgoCD into the self-service flow so new teams were on GitOps from their first day without having to think about it.
 
 ## Backstage
 
-Contributed to Meltwater's Backstage implementation — the internal developer portal that unified documentation, service ownership, and onboarding across the organisation. The goal was to make it easy to answer "who owns this service, where is its documentation, and what does its dependency graph look like?" without hunting through three different systems.
+I worked on Meltwater's Backstage portal — the internal catalogue for documentation, service ownership, and onboarding. The point was to make "who owns this, where are its docs, what does it depend on" answerable in one place instead of three.

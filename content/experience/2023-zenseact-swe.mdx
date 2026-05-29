@@ -6,25 +6,25 @@ startDate: "2023-12"
 endDate: "2024-10"
 location: "Gothenburg, Sweden"
 tags: ["Bazel", "CI/CD", "Go", "Build Systems"]
-summary: "Ten months embedded in the Bazel and CI ecosystem for a large autonomous driving monorepo — designing testing patterns, standardising workflows, and generally finding things that were broken."
+summary: "Ten months on the Bazel and CI team for a large autonomous-driving monorepo — building testing patterns, smoothing out workflows, and fixing whatever was slowing developers down."
 ---
 
 ## The Work
 
-I joined Zenseact as a Senior Software Engineer on the Bazel and CI ecosystem team. The focus was a large Bazel monorepo building the software stack for autonomous vehicles, and the work was about finding concrete bottlenecks and removing them — not designing systems in the abstract, but getting close to the actual friction engineers were hitting every day.
+I joined Zenseact on the team that owns the Bazel and CI ecosystem for a big monorepo building the autonomous-driving stack. The job was mostly finding the things that were actually slowing people down day to day and fixing them, rather than designing anything grand.
 
-## Testing What You Can't Test Before You Ship
+## Testing Changes You Can't Test Before They Land
 
-One recurring problem with large build systems is that some changes can't be meaningfully validated before they land. If you're upgrading Bazel itself, your CI pipeline runs on the old version. Pre-merge testing against the new version doesn't exist yet — there's structurally nothing to test against.
+Some changes can't be validated before they merge. If you're upgrading Bazel itself, your CI runs on the old version — there's nothing to test the new one against until it's already in. Pre-merge coverage just doesn't exist for that case.
 
-I designed a post-merge validation pattern using branches to handle this class of problem. Rather than trying to force pre-merge coverage where it can't work, a designated branch tracks the environmental change and CI validates against it post-merge, before it reaches the broader fleet. The pattern is reusable: I first applied it to the Bazel version upgrade, but it works for any environmental change where the testing infrastructure itself is what's being changed.
+So instead of trying to force it, I set up a post-merge validation pattern on a branch: a designated branch tracks the environmental change, and CI validates against it after merge but before it reaches the wider fleet. I first used it for a Bazel version bump, but it works for any change where the thing you'd test with is the thing you're changing.
 
 ## Dark Builds
 
-We had a dependency on a pre-built baseline from our parent company — a large artifact that Zenseact's software layered on top of. When an engineer needed to validate a patch against a different version of that baseline (the typical use case: proving a fix in the parent company's code resolved a bug we were seeing downstream), the only option was to do it entirely locally. Ad-hoc rebuilds, uncommitted patches, results nobody else could reproduce or review.
+We depended on a pre-built baseline from our parent company that Zenseact's software sat on top of. When an engineer needed to test a patch against a different version of that baseline — usually to prove a fix in the parent's code actually resolved a bug we were seeing — the only way to do it was locally. Ad-hoc rebuilds, uncommitted patches, results nobody else could see or reproduce.
 
-I built a CLI-driven dark build workflow that brought this into the normal SDLC. Engineers trigger a baseline rebuild through a command, everything runs through CI on a branch, and the patches are committed and reviewable. It turned a process nobody could trace into one with a proper audit trail.
+I built a CLI-driven dark build workflow that pulled this into the normal flow. You trigger a baseline rebuild with a command, it runs through CI on a branch, and the patches get committed and reviewed like anything else. Same work, but now there's a trail.
 
 ## BuildBuddy
 
-I set up a self-hosted BuildBuddy instance to give developers timing visibility into their Bazel builds in CI. Low implementation effort — a Friday afternoon, really — but the org-wide view of where build time was actually going was useful both for identifying what was worth optimising and for helping engineers understand why their specific changes were slow.
+I stood up a self-hosted BuildBuddy instance so developers could see where time was actually going in their Bazel builds in CI. It was basically a Friday afternoon of work, but having an org-wide view of build timing was genuinely useful — both for picking what was worth optimising and for explaining to engineers why a particular change of theirs was slow.

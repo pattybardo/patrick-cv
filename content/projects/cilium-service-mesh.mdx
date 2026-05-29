@@ -8,9 +8,9 @@ status: "shipped"
 
 ## Why Cilium
 
-Traditional Kubernetes network policy operates at the IP/port level — it's coarse-grained and breaks down when pods are ephemeral and IP addresses are reused. **Cilium** solves this by using **eBPF** to enforce policy at the kernel level, based on cryptographic workload identity rather than IP addresses.
+Default Kubernetes network policy works at the IP/port level, which falls apart when pods are short-lived and IPs get reused. **Cilium** uses **eBPF** to enforce policy in the kernel based on workload identity instead of IP addresses.
 
-For a multi-tenant platform, this distinction matters enormously. Identity-based policies mean that security boundaries are defined by what a workload *is*, not where it happens to be running at a given moment.
+On a multi-tenant platform that's the difference that counts. Policies follow what a workload *is*, so they keep holding as pods restart and move around rather than going stale the moment an IP changes.
 
 ## Gateway API Implementation
 
@@ -25,8 +25,8 @@ Designed the layered network policy model for the platform:
 - **Tenant policies**: scoped to a team's namespace, giving them control over their own service-to-service communication
 - **Default-deny baseline**: all traffic denied unless explicitly permitted, enforced via a base policy that applies to every namespace at provision time
 
-The result is a platform where network security is correct by default, and teams opt in to communication paths they need rather than opting out of ones they don't.
+So the platform denies by default and teams opt in to the paths they actually need, instead of trying to remember to close the ones they don't.
 
 ## eBPF Observability
 
-One underappreciated benefit of Cilium: the eBPF-based data plane gives you detailed network flow visibility with minimal overhead. Used Hubble (Cilium's observability layer) to provide teams with a live view of which services are talking to which, where connections are being dropped by policy, and what the latency distribution looks like at the network layer.
+A nice side benefit of the eBPF data plane is that you get detailed network flow visibility almost for free. I used Hubble (Cilium's observability layer) to give teams a live view of which services were talking to which, where policy was dropping connections, and what latency looked like down at the network layer.
