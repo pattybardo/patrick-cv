@@ -28,9 +28,7 @@ export default function Home() {
               </p>
             )}
             <p className="font-sans text-base text-text-muted max-w-lg mt-4 leading-relaxed">
-              Platform engineer at the intersection of infrastructure and autonomy. I build the
-              systems that let engineering teams move fast without breaking things — developer
-              platforms, observability pipelines, and the networking layer underneath.
+              I build platforms that let engineering teams move fast by abstracting away the infrastructure they shouldn't have to think about — kept simple to use and easy to override. The real work is the judgment underneath: understanding a team's use case well enough to surface the requirements they haven't articulated yet.
             </p>
             <p className="font-mono text-xs text-text-muted mt-2 tracking-wide">
               Gothenburg, Sweden
