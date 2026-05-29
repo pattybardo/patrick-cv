@@ -2,7 +2,7 @@
 title: "ELK Logging Pipeline at 1B+ Docs/Day"
 date: "2022-06"
 tags: ["Elasticsearch", "Logstash", "Kibana", "Observability", "Data Engineering"]
-summary: "Maintained and improved an ELK stack indexing over a billion documents a day — per-tenant routing, automated lifecycle management, and a major version migration."
+summary: "Maintained and improved an ELK stack indexing over a billion documents a day — load-driven shard distribution, per-tenant routing, automated lifecycle management, and a major version migration."
 status: "shipped"
 ---
 
@@ -12,15 +12,23 @@ Meltwater's ELK stack handles the log and event output of a large distributed pr
 
 ## Index Lifecycle Management
 
-First job was moving to **ILM (Index Lifecycle Management)** for rollover and retention. Before that, index management was a mix of manual steps and fragile cron jobs. With ILM in place, indices roll over on a size or age threshold, move down to warm and cold tiers as they age, and get deleted when their retention window is up. That cleared out a whole category of manual work and made retention consistent and easy to reason about.
+First job was moving to **ILM (Index Lifecycle Management)** for rollover and retention. Before that, index management was a mix of manual steps and fragile cron jobs. With ILM in place, indices roll over on a size or age threshold, move down to warm and cold tiers as they age, and get deleted when their retention window is up. That cleared out a whole category of manual work and made retention consistent.
 
-## Shard Strategy
+## Shard Distribution
 
-At this scale, where shards land has a real effect on query performance and on whether the cluster stays upright. I worked on the number of shards per index, shard sizing, and rebalancing so we didn't end up with hot shards — one shard taking disproportionate load because a customer's data happens to be concentrated in a narrow slice of time.
+Elasticsearch distributes shards by count across nodes, assuming each shard does roughly the same amount of work. In a logging cluster where ingestion rate varies enormously by application, that assumption breaks down — some nodes sit idle while others redline.
+
+An earlier intern project had built a load-driven optimiser to fix this: estimate actual shard load from Prometheus, then move shards to balance load per node rather than count. I took that system further in two ways.
+
+**Error function**: the original used MSE against the mean node load. I switched to an error function that penalised nodes sitting far from the mean more aggressively, so the optimiser prioritised the worst outliers rather than nibbling at small imbalances.
+
+**Disk step**: load and disk balance can't be optimised simultaneously — moves that help one tend to hurt the other. I added a check: if disk MSE was above a threshold, run a disk-balancing pass before the load pass. The practical effect was better disk distribution. The side effect was that the disk pass shuffles hot shards into a new arrangement, and because placement is constrained by hard rules (no primary and replica on the same node, replicas must span availability zones), the fresh topology sometimes let the load optimiser reach a lower minimum than it could from the original starting point.
+
+The result was around **200k documents per second** of sustained throughput on a similarly-sized cluster, without the hotspot-driven lag the system had seen before.
 
 ## Per-Tenant Routing
 
-I built a per-tenant routing layer in the indexing pipeline so high-volume customers get routed to dedicated index paths instead of dominating shared infrastructure. It isolated the noisy tenants without needing separate hardware for each of them.
+I built a per-tenant routing layer in the indexing pipeline so high-volume customers get routed to dedicated index paths instead of dominating shared infrastructure. It isolated noisy tenants without needing separate hardware for each.
 
 ## The Version Migration
 

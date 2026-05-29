@@ -23,7 +23,15 @@ We landed on a namespace-per-team setup with resource quotas, network policies t
 
 I owned the ELK stack, which was indexing **over a billion documents a day** across the product. At that volume the day-to-day work isn't "can Elasticsearch keep up" — it's index lifecycle, shard allocation, and what happens when a customer's query pattern shifts overnight and lands on a hot shard.
 
-The main improvements: moving to ILM for automated rollover and retention so we weren't babysitting indices by hand, tuning JVM heap across the data tier, and adding a per-tenant routing layer so one loud pipeline couldn't drag everyone else down with it.
+The main operational improvements: moving to ILM for automated rollover and retention so we weren't babysitting indices by hand, tuning JVM heap across the data tier, and adding a per-tenant routing layer so one loud pipeline couldn't drag everyone else down with it.
+
+The more interesting work was on throughput. Elasticsearch distributes shards by count, not by load — it assumes each shard does roughly the same amount of work, which for a logging cluster with highly variable ingestion rates per application is just wrong. An earlier intern project had built a load-driven shard optimiser to address this: estimate actual shard load from Prometheus, then move shards to balance load per node rather than count. I picked that system up and took it further.
+
+I changed the error function. The original used MSE against the mean node load, which treated small and large deviations about the same. I switched to something that penalised nodes sitting far from the mean more aggressively, so the optimiser would pull down the worst outliers first rather than nibbling at small imbalances.
+
+I also added a disk step. You can't optimise load and disk at the same time — moving shards for load balance tends to break disk balance and vice versa. So I added a check: if disk MSE across nodes was over a threshold, run a disk-balancing pass before the load pass. The obvious gain was better disk distribution. The less obvious one was that the disk pass shuffles the hot shards into a new arrangement, and because placement is constrained by hard rules (primaries and replicas can't share a node, replicas must be in different availability zones), the fresh topology sometimes put the load optimiser in a position where it could reach a lower minimum than it could from its original starting point.
+
+The goal of all this was sustained throughput — we got to around **200k documents per second** on a cluster that wasn't much bigger than before, without the hotspot problems that had caused lag in the past. Handling sudden traffic spikes beyond that is a separate autoscaling problem.
 
 ## ArgoCD at Scale
 
