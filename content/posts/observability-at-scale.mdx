@@ -6,17 +6,13 @@ summary: "What operating an ELK stack at petabyte scale taught me about the diff
 readingTime: 6
 ---
 
-There's a version of observability that is dashboards, and there's a version that is understanding. They're not the same thing, and at scale, the gap between them becomes a liability.
+I spent about two years on Meltwater's ELK stack — a billion-plus documents a day, thousands of customers, alerts going off at inconvenient hours. The system was monitored in the conventional sense: Kibana dashboards, alerts on index lag and JVM heap usage, uptime checks. The gaps only became obvious when something went wrong and we needed to answer questions those dashboards hadn't been built to answer.
 
-I learned this operating Meltwater's logging pipeline — an ELK stack indexing over a billion documents a day, serving thousands of customers across a distributed product. The system was well-monitored in the conventional sense: we had Kibana dashboards, we had alerts on index lag and JVM heap usage, we had uptime checks. What we didn't have, for a long time, was genuine observability.
+## What Was Missing
 
-## The Difference
+When the P99 indexing latency alert fired, we knew latency was up. We didn't know which customers were affected, which shards, whether it was GC pressure or a hot shard or a Logstash bottleneck. Every incident started the same way — an hour of manual digging before we could form a useful hypothesis.
 
-Monitoring tells you that something is wrong. Observability tells you *why*.
-
-A monitoring system says: your P99 indexing latency has crossed the alert threshold. An observable system lets you ask the follow-up questions without deploying new instrumentation: Which customers are affected? Which shards? Is this a hot shard problem or a JVM GC pause? Is it correlated with a specific Logstash pipeline stage?
-
-At a billion documents a day, the search space for "what's wrong" is enormous. You can't afford to diagnose by hypothesis — you need to be able to query your way to the answer.
+At a billion documents a day, that gets old fast. We needed to be able to ask specific questions and get answers, not reconstruct state from scratch every time.
 
 ## What We Actually Built
 
@@ -30,12 +26,9 @@ The third was **per-tenant visibility**. A noisy customer (high document volume,
 
 When I moved to Zenseact and started working with Cilium's eBPF-based observability (Hubble), I found the same principle at the network layer. Cilium gives you per-flow network visibility at kernel level — not just "traffic is flowing" but which service talked to which, which connection was dropped by policy, what the latency distribution looks like at the network layer rather than the application layer. Network observability with the same depth that application tracing gives you at the service layer.
 
-The pattern is consistent: instrumentation at the right granularity, queryable in real time, correlated across signals. The technology changes; the design principle doesn't.
 
-## What Good Observability Changes
+## What Changed
 
-The biggest practical impact of genuinely observable systems isn't faster incident response (though that's real). It's that engineers stop being afraid of their systems.
+Faster incident response is the obvious benefit. The less obvious one: engineers started being more willing to make changes they'd previously been nervous about. When you can actually see what's happening, there's less guesswork in deciding whether something is safe to try.
 
-When you can ask your system questions and get answers, you run experiments rather than avoiding risk. You make changes with confidence rather than with fingers crossed. You do post-mortems on what actually happened rather than on what you think probably happened.
-
-At scale, that confidence is the difference between a platform that teams trust and one they route around.
+Teams route around platforms they don't trust. At scale, that matters.
