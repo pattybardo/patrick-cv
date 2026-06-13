@@ -8,9 +8,9 @@ status: "shipped"
 
 ## The Problem
 
-At Meltwater's scale — 40+ engineering teams across multiple products — every team managing their own deployment conventions was becoming untenable. Inconsistent Kubernetes configurations, unclear ownership boundaries, and a steady stream of "how do I deploy this?" tickets were symptoms of a platform that had grown faster than its governance model.
+With 40+ teams across multiple products, every team running its own deployment conventions had stopped working. Configurations didn't match, ownership was unclear, and there was a constant trickle of "how do I deploy this?" tickets. The platform had grown faster than the rules around it.
 
-The goal was a platform that teams could use without needing to understand what was underneath it, but that operations could manage with confidence.
+The goal was something teams could use without having to understand what was under it, and that we could run without holding our breath.
 
 ## Architecture
 
@@ -22,13 +22,13 @@ Network policy is enforced via **Cilium**, which provides identity-based policie
 
 ## Self-Service Provisioning
 
-The key usability feature: teams get a new environment by opening a pull request against a platform repository, not by opening a ticket. A Terraform module defines the namespace, quotas, RBAC bindings, and ArgoCD project for a team. Approving the PR provisions everything. No human intervention required in the critical path.
+The part that mattered most: teams get a new environment by opening a pull request against a platform repo, not by filing a ticket. A Terraform module defines the namespace, quotas, RBAC bindings, and ArgoCD project. Approving the PR provisions all of it, with no one needed in the critical path.
 
-This shifted the platform team's role from provisioning work to reviewing changes — a much better use of time, and a much faster path for teams.
+This moved us from doing provisioning work to reviewing changes — a better use of our time and a much faster path for teams.
 
 ## Outcome
 
-- 40+ teams onboarded to the platform
-- Zero-ticket environment provisioning
-- Consistent deployment patterns across the organisation
-- Network security posture enforced by default, not by convention
+- 40+ teams onboarded
+- Environment provisioning with no tickets
+- Deployment patterns that actually matched across the org
+- Network security on by default rather than by convention

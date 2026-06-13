@@ -2,28 +2,34 @@
 title: "ELK Logging Pipeline at 1B+ Docs/Day"
 date: "2022-06"
 tags: ["Elasticsearch", "Logstash", "Kibana", "Observability", "Data Engineering"]
-summary: "Maintained and significantly improved an ELK stack indexing over a billion documents a day, with per-tenant routing, automated lifecycle management, and a major version migration."
+summary: "Maintained and improved an ELK stack indexing over a billion documents a day — load-driven shard distribution, per-tenant routing, automated lifecycle management, and a major version migration."
 status: "shipped"
 ---
 
 ## Scale
 
-Meltwater's ELK stack processes the log and event output of a large distributed product, used by thousands of customers daily. At peak, the pipeline indexes over **a billion documents per day** — a scale where the operational decisions that are optional at smaller volumes become mandatory.
+Meltwater's ELK stack handles the log and event output of a large distributed product used by thousands of customers. At peak it indexes over **a billion documents a day**. At that volume the things you can get away with skipping on a small cluster stop being optional.
 
 ## Index Lifecycle Management
 
-The first major improvement was introducing **ILM (Index Lifecycle Management)** for automated rollover and retention. Before ILM, index management was a mix of manual operations and fragile cron jobs. With ILM, indices automatically roll over when they hit a size or age threshold, move to warm/cold tiers as they age, and are deleted when their retention window expires.
+First job was moving to **ILM (Index Lifecycle Management)** for rollover and retention. Before that, index management was a mix of manual steps and fragile cron jobs. With ILM in place, indices roll over on a size or age threshold, move down to warm and cold tiers as they age, and get deleted when their retention window is up. That cleared out a whole category of manual work and made retention consistent.
 
-This eliminated an entire category of manual toil and made retention behaviour consistent and auditable.
+## Shard Distribution
 
-## Shard Strategy
+Elasticsearch distributes shards by count across nodes, assuming each shard does roughly the same amount of work. In a logging cluster where ingestion rate varies enormously by application, that assumption breaks down — some nodes sit idle while others redline.
 
-At this scale, shard allocation strategy has a significant impact on query performance and cluster stability. Worked on tuning the number of shards per index, shard sizing targets, and rebalancing policies to avoid hot shards — situations where one shard receives disproportionate query or indexing load because a customer's data is concentrated in a narrow time range.
+An earlier intern project had built a load-driven optimiser to fix this: estimate actual shard load from Prometheus, then move shards to balance load per node rather than count. I took that system further in two ways.
+
+**Error function**: the original used MSE against the mean node load. I switched to an error function that penalised nodes sitting far from the mean more aggressively, so the optimiser prioritised the worst outliers rather than nibbling at small imbalances.
+
+**Disk step**: load and disk balance can't be optimised simultaneously — moves that help one tend to hurt the other. I added a check: if disk MSE was above a threshold, run a disk-balancing pass before the load pass. The practical effect was better disk distribution. The side effect was that the disk pass shuffles hot shards into a new arrangement, and because placement is constrained by hard rules (no primary and replica on the same node, replicas must span availability zones), the fresh topology sometimes let the load optimiser reach a lower minimum than it could from the original starting point.
+
+The result was around **200k documents per second** of sustained throughput on a similarly-sized cluster, without the hotspot-driven lag the system had seen before.
 
 ## Per-Tenant Routing
 
-Built a per-tenant routing layer in the indexing pipeline so that high-volume customers (ingesting at a rate that would otherwise dominate shared infrastructure) are routed to dedicated index paths. This isolated noisy tenants without requiring separate physical infrastructure for each one.
+I built a per-tenant routing layer in the indexing pipeline so high-volume customers get routed to dedicated index paths instead of dominating shared infrastructure. It isolated noisy tenants without needing separate hardware for each.
 
 ## The Version Migration
 
-Migrating the cluster from Elasticsearch 1.7 to 7.x was the foundational project that preceded all of this. Six major versions, incompatible data formats, a live production cluster that couldn't simply be taken offline. The approach — shadow indexing, historical backfill, a query compatibility shim, and a metered traffic cut-over — is documented in the Meltwater Software Engineer role.
+The foundation under all of this was the migration from Elasticsearch 1.7 to 7.x — six major versions, incompatible on-disk formats, and a live cluster that couldn't go offline. The approach (shadow indexing, backfill, a query compatibility shim, and a metered cut-over) is written up in the Meltwater Software Engineer role.
