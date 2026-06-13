@@ -8,9 +8,7 @@ status: "shipped"
 
 ## Why Cilium
 
-Traditional Kubernetes network policy operates at the IP/port level — it's coarse-grained and breaks down when pods are ephemeral and IP addresses are reused. **Cilium** solves this by using **eBPF** to enforce policy at the kernel level, based on cryptographic workload identity rather than IP addresses.
-
-For a multi-tenant platform, this distinction matters enormously. Identity-based policies mean that security boundaries are defined by what a workload *is*, not where it happens to be running at a given moment.
+Traditional Kubernetes network policy operates at the IP/port level — it's coarse-grained and breaks down when pods are ephemeral and IP addresses are reused. **Cilium** solves this by using **eBPF** to enforce policy at the kernel level, based on cryptographic workload identity rather than IP addresses. Security boundaries are defined by what a workload *is*, not where it happens to be running at a given moment.
 
 ## Gateway API Implementation
 

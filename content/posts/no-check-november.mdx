@@ -54,7 +54,7 @@ Here's the thing about the storage team's dashboard: it wasn't wrong. Ceph wasn'
 
 What the dashboard couldn't see was performance degradation. Specifically: a small number of OSDs — the storage daemon processes responsible for actual disk operations — were experiencing severe apply latency. One OSD at a time would spike to a ceiling of around 258 seconds for apply operations. When an OSD hit that ceiling, read and write latencies started climbing cluster-wide.
 
-A dashboard that only turns red when things are catastrophically broken will tell you everything is fine until very shortly before everything is catastrophically broken. For degraded performance, saturation in a specific component, latency that hasn't yet caused outright failure — it's invisible.
+A dashboard that only turns red when things are catastrophically broken will tell you everything is fine until very shortly before everything is catastrophically broken.
 
 This isn't a bug in the dashboard. It's a design choice. Dashboards are built by people with assumptions about what matters. The storage team's dashboard was built for catastrophe detection and was very good at it. Nobody had built the performance degradation dashboard, because performance degradation hadn't caused an incident before. Until it had.
 

@@ -16,7 +16,7 @@ At a billion documents a day, that gets old fast. We needed to be able to ask sp
 
 ## What We Actually Built
 
-The first thing we fixed was **cardinality**. Our initial metrics were aggregated across the cluster — average indexing rate, total document count, overall heap usage. Useful for trend analysis, useless for incident response. We re-instrumented at per-index and per-node granularity, which immediately made it possible to answer "is this a one-bad-node problem or a cluster-wide problem?" — a question that changes the response entirely.
+The first thing we fixed was **cardinality**. Our initial metrics were aggregated across the cluster — average indexing rate, total document count, overall heap usage. Useful for trend analysis, useless for incident response. We re-instrumented at per-index and per-node granularity, which immediately made it possible to answer "is this a one-bad-node problem or a cluster-wide problem?"
 
 The second was **cross-signal correlation**. Slow indexing latency has several possible causes: GC pressure, hot shards, Logstash pipeline bottlenecks, or a customer sending malformed documents that trigger expensive mapping operations. We built a correlation layer that surfaced relevant signals together when an alert fired — so the on-call engineer wasn't starting from scratch, but from a pre-structured investigation context.
 
@@ -31,4 +31,4 @@ When I moved to Zenseact and started working with Cilium's eBPF-based observabil
 
 Faster incident response is the obvious benefit. The less obvious one: engineers started being more willing to make changes they'd previously been nervous about. When you can actually see what's happening, there's less guesswork in deciding whether something is safe to try.
 
-Teams route around platforms they don't trust. At scale, that matters.
+Teams route around platforms they don't trust.

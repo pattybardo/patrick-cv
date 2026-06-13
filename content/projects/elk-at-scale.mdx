@@ -14,8 +14,6 @@ Meltwater's ELK stack processes the log and event output of a large distributed 
 
 The first major improvement was introducing **ILM (Index Lifecycle Management)** for automated rollover and retention. Before ILM, index management was a mix of manual operations and fragile cron jobs. With ILM, indices automatically roll over when they hit a size or age threshold, move to warm/cold tiers as they age, and are deleted when their retention window expires.
 
-This eliminated an entire category of manual toil and made retention behaviour consistent and auditable.
-
 ## Shard Strategy
 
 At this scale, shard allocation strategy has a significant impact on query performance and cluster stability. Worked on tuning the number of shards per index, shard sizing targets, and rebalancing policies to avoid hot shards — situations where one shard receives disproportionate query or indexing load because a customer's data is concentrated in a narrow time range.
