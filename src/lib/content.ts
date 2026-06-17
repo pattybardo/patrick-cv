@@ -1,8 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
-import { ExperienceSchema, ProjectSchema, PostSchema } from './types'
-import type { Experience, Project, Post } from './types'
+import { ExperienceSchema, ProjectSchema, PostSchema, ReadingSchema } from './types'
+import type { Experience, Project, Post, Reading } from './types'
 
 const contentDir = path.join(process.cwd(), 'content')
 
@@ -62,6 +62,16 @@ export function getAllPosts(): Post[] {
 export function getPostBySlug(slug: string): Post | null {
   const all = getAllPosts()
   return all.find(p => p.slug === slug) ?? null
+}
+
+export function getAllReading(): Reading[] {
+  return readMDXFiles('reading')
+    .map(({ slug, content, data }) => ({
+      ...ReadingSchema.parse(data),
+      slug,
+      content,
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date))
 }
 
 export function getYearFromDate(date: string): number {

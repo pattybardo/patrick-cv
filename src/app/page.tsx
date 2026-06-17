@@ -1,5 +1,6 @@
 import { getAllExperience, getAllProjects, getAllPosts } from '@/lib/content'
 import { Timeline } from '@/components/Timeline'
+import { MDXContent } from '@/components/MDXContent'
 
 export default function Home() {
   const experience = getAllExperience()
@@ -7,6 +8,17 @@ export default function Home() {
   const posts = getAllPosts()
 
   const currentRole = experience.find(e => !e.endDate)
+
+  const renderedContent: Record<string, React.ReactNode> = {}
+  experience.forEach(e => {
+    renderedContent[e.slug] = <MDXContent source={e.content} />
+  })
+  projects.forEach(p => {
+    renderedContent[`project:${p.slug}`] = <MDXContent source={p.content} />
+  })
+  posts.forEach(p => {
+    renderedContent[`post:${p.slug}`] = <MDXContent source={p.content} />
+  })
 
   return (
     <main className="min-h-screen">
@@ -28,7 +40,7 @@ export default function Home() {
               </p>
             )}
             <p className="font-sans text-base text-text-muted max-w-lg mt-4 leading-relaxed">
-              I build platforms that let engineering teams move fast by abstracting away the infrastructure they shouldn't have to think about — kept simple to use and easy to override. The real work is the judgment underneath: understanding a team's use case well enough to surface the requirements they haven't articulated yet.
+              I engineer platforms and automated systems that let developers focus purely on their code. By translating unarticulated user needs into simple, highly extensible infrastructure, I ensure our teams can move fast without breaking a sweat.
             </p>
             <p className="font-mono text-xs text-text-muted mt-2 tracking-wide">
               Gothenburg, Sweden
@@ -87,7 +99,7 @@ export default function Home() {
           </div>
           <div className="col-span-12 md:col-span-10">
             <div className="pl-16 relative">
-              <Timeline experience={experience} projects={projects} posts={posts} />
+              <Timeline experience={experience} projects={projects} posts={posts} renderedContent={renderedContent} />
             </div>
           </div>
         </div>

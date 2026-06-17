@@ -11,9 +11,10 @@ interface TimelineProps {
   experience: Experience[]
   projects: Project[]
   posts: Post[]
+  renderedContent: Record<string, React.ReactNode>
 }
 
-function TimelineInner({ experience, projects, posts }: TimelineProps) {
+function TimelineInner({ experience, projects, posts, renderedContent }: TimelineProps) {
   const { openParam, open, close } = useSidePanel()
 
   const panelData = useMemo(() => {
@@ -120,7 +121,11 @@ function TimelineInner({ experience, projects, posts }: TimelineProps) {
         ))}
       </div>
 
-      <SidePanel panelData={panelData} onClose={close} />
+      <SidePanel
+        panelData={panelData}
+        content={openParam ? renderedContent[openParam] : null}
+        onClose={close}
+      />
     </>
   )
 }

@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { MDXContent } from './MDXContent'
 import { Tag } from './Tag'
 import type { Experience, Project, Post } from '@/lib/types'
 
@@ -15,6 +14,7 @@ type PanelData =
 
 interface SidePanelProps {
   panelData: PanelData
+  content: React.ReactNode
   onClose: () => void
 }
 
@@ -118,7 +118,7 @@ function CloseButton({ onClose }: { onClose: () => void }) {
   )
 }
 
-export function SidePanel({ panelData, onClose }: SidePanelProps) {
+export function SidePanel({ panelData, content, onClose }: SidePanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
 
   return (
@@ -145,7 +145,7 @@ export function SidePanel({ panelData, onClose }: SidePanelProps) {
           >
             <PanelHeader panelData={panelData} onClose={onClose} />
             <div className="flex-1 overflow-y-auto p-6">
-              <MDXContent source={panelData.data.content} />
+              <div className="mdx-content">{content}</div>
             </div>
           </motion.div>
         </>

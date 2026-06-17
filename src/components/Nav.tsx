@@ -10,17 +10,23 @@ export function Nav() {
           P.BARDO
         </Link>
         <div className="flex items-center gap-8">
-          <a
-            href="#timeline"
+          <Link
+            href="/#timeline"
             className="font-mono text-[11px] uppercase tracking-widest text-text-muted hover:text-text-primary transition-colors duration-100"
           >
             Work
-          </a>
+          </Link>
           <Link
             href="/posts"
             className="font-mono text-[11px] uppercase tracking-widest text-text-muted hover:text-text-primary transition-colors duration-100"
           >
             Writing
+          </Link>
+          <Link
+            href="/reading"
+            className="font-mono text-[11px] uppercase tracking-widest text-text-muted hover:text-text-primary transition-colors duration-100"
+          >
+            Reading
           </Link>
           <a
             href="mailto:patryk.bardo@gmail.com"

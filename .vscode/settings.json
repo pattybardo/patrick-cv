@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cat node_modules/framer-motion/package\\.json \\| grep -A20 '\"exports\"' \\| head -30; echo \"===ESM TEST===\"; node --input-type=module -e \"import \\* as m from 'framer-motion'; console\\.log\\('motion:',typeof m\\.motion,'AnimatePresence:',typeof m\\.AnimatePresence\\);\" 2>&1 \\| head$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
